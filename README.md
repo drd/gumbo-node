@@ -16,9 +16,9 @@ API
 Node
 - nodeType: integer
 - position: Object
--- line: line number (1-indexed)
--- column: column number (1-indexed)
--- offset: byte offset (0-indexed)
+  - line: line number (1-indexed)
+  - column: column number (1-indexed)
+  - offset: byte offset (0-indexed)
 
 Element:
 - tag: gumbo normalized tag name
@@ -32,5 +32,5 @@ Text/Comment/CDATA:
 Thanks
 ------
 
-- Much of this work was based on @karlwestin's work on the gumbo-parser .gyp bindings
+- Much of this work was based on [karlwestin/gumbo-parser](github.com/karlwestin/gumbo-parser) .gyp bindings
 - authors of Gumbo for making such a convenient library
