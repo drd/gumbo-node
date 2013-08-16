@@ -1,0 +1,26 @@
+{
+  "name": "gumbo-node",
+  "version": "0.0.1",
+  "description": "A node.js wrapper for Google's gumbo html5 parser",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/drd/gumbo-node"
+  },
+  "gypfile": true,
+  "keywords": [
+    "html",
+    "parser",
+    "html5",
+    "gumbo"
+  ],
+  "author": "Eric O'Connell <eric.oconnell@idealist.org>",
+  "license": "BSD",
+  "bugs": {
+    "url": "https://github.com/drd/gumbo-node/issues"
+  },
+  "dependencies": {}
+}
