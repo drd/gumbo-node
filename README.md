@@ -15,15 +15,17 @@ API
 
 Node
 - nodeType: integer
+- nodeName: string
 - position: Object
   - line: line number (1-indexed)
   - column: column number (1-indexed)
   - offset: byte offset (0-indexed)
 
 Element:
-- tag: gumbo normalized tag name
+- tagName: gumbo normalized tag name
 - originalTag: tag from source
 - children: array of Nodes
+- attributes: hash of attr names/values
 
 Text/Comment/CDATA:
 - text
