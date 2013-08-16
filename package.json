@@ -1,8 +1,8 @@
 {
   "name": "gumbo-node",
-  "version": "0.0.1",
+  "version": "0.0.2",
+  "main": "./gumbo.js",
   "description": "A node.js wrapper for Google's gumbo html5 parser",
-  "main": "index.js",
   "scripts": {
     "test": "node test/test.js"
   },
