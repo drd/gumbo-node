@@ -13,7 +13,12 @@ function testParse(err, text) {
     var tree = gumbo.parse(text);
     assert(!!tree, "Returned a value");
 
-    assert(tree.tag == 'html', "Root node is <html>");
+    assert(tree.tagName == 'html', "Root node is <html>");
+    assert(tree.children[0].tagName == 'head');
+    assert(tree.children[0].children[1].tagName == 'title');
+    assert(tree.children[2].tagName == 'body');
+    assert(tree.children[2].children[1].nodeName == '#comment');
+    assert(tree.children[2].children[3].attributes['class'] == 'waffle');
 }
 
 

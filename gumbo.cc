@@ -82,13 +82,23 @@ Local<Object> create_parse_tree(GumboNode* node) {
 
 Local<Object> consume_element(GumboElement* element) {
     Local<Object> tree = Object::New();
-    tree->Set(String::NewSymbol("tag"),
+    tree->Set(String::NewSymbol("tagName"),
 	      String::New(gumbo_normalized_tagname(element->tag)));
     tree->Set(String::NewSymbol("originalTag"),
 	      String::New(element->original_tag.data,
 			  element->original_tag.length));
     tree->Set(String::NewSymbol("length"),
 	      Number::New(element->children.length));
+
+    Local<Object> attributes = Object::New();
+    tree->Set(String::NewSymbol("attributes"), attributes);
+
+    GumboVector* element_attrs = &element->attributes;
+    for (uint i=0; i < element_attrs->length; i++) {
+	GumboAttribute* element_attr = (GumboAttribute* )element_attrs->data[i];
+	attributes->Set(String::New(element_attr->name),
+			String::New(element_attr->value));
+    }
 
     Local<Array> children = Array::New();
     tree->Set(String::NewSymbol("children"),
@@ -98,7 +108,7 @@ Local<Object> consume_element(GumboElement* element) {
     DPRINTF("create_parse_tree, %d\n", element_children->length)
     for (uint i=0; i < element->children.length; i++) {
 	DPRINTF("about to make child %d\n", i)
-	GumboNode *element_child = (GumboNode* )element_children->data[i];
+	GumboNode* element_child = (GumboNode* )element_children->data[i];
 	Local<Object> child = create_parse_tree(element_child);
 	children->Set(Number::New(i), child);
     }
@@ -110,7 +120,7 @@ Local<Object> consume_element(GumboElement* element) {
 
 Local<Object> consume_text(GumboText* text) {
     Local<Object> text_node = Object::New();
-    text_node->Set(String::NewSymbol("tag"), String::NewSymbol("#text"));
+    text_node->Set(String::NewSymbol("nodeName"), String::NewSymbol("#text"));
     text_node->Set(String::NewSymbol("text"),
 		   String::New(text->text));
 
@@ -121,7 +131,7 @@ Local<Object> consume_text(GumboText* text) {
 
 Local<Object> consume_comment(GumboText* text) {
     Local<Object> text_node = Object::New();
-    text_node->Set(String::NewSymbol("tag"), String::NewSymbol("#comment"));
+    text_node->Set(String::NewSymbol("nodeName"), String::NewSymbol("#comment"));
     text_node->Set(String::NewSymbol("text"),
 		   String::New(text->text));
 
