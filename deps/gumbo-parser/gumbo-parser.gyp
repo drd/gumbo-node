@@ -50,7 +50,7 @@
        ],
        'conditions': [
            ['OS=="linux"', {
-             'cflags': ['-std=c99']
+             'cflags': ['-std=gnu99']
            }, {}]
        ],
     },
