@@ -32,5 +32,5 @@ Text/Comment/CDATA:
 Thanks
 ------
 
-- Much of this work was based on [karlwestin/gumbo-parser](github.com/karlwestin/gumbo-parser) .gyp bindings
+- Much of this work was based on [karlwestin/gumbo-parser](http://github.com/karlwestin/gumbo-parser) .gyp bindings
 - authors of Gumbo for making such a convenient library
