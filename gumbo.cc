@@ -14,7 +14,7 @@
 using namespace v8;
 
 
-Local<Object> create_parse_tree(GumboNode* root, Handle<Value> parent);
+Handle<Value> create_parse_tree(GumboNode* root, Handle<Value> parent);
 Local<Array> get_children(GumboVector* children);
 Local<Object> consume_document(GumboDocument* document);
 Local<Object> consume_element(GumboElement* element, Handle<Value> parent);
@@ -38,7 +38,7 @@ Local<Array> get_children(GumboVector* children, Handle<Value> parent) {
 
     for (uint i=0; i < children->length; i++) {
 	GumboNode* node_child = (GumboNode* )children->data[i];
-	Local<Object> child = create_parse_tree(node_child, parent);
+	Handle<Value> child = create_parse_tree(node_child, parent);
 	node_children->Set(Number::New(i), child);
     }
 
@@ -46,7 +46,7 @@ Local<Array> get_children(GumboVector* children, Handle<Value> parent) {
 }
 
 
-Local<String> get_quirks_mode(GumboQuirksModeEnum mode) {
+Handle<Value> get_quirks_mode(GumboQuirksModeEnum mode) {
     const char* mode_name;
     switch (mode) {
     case GUMBO_DOCTYPE_NO_QUIRKS:
@@ -60,7 +60,9 @@ Local<String> get_quirks_mode(GumboQuirksModeEnum mode) {
 	break;
     default:
 	// TODO: raise exception?
-	mode_name = "unknown";
+	ThrowException(
+            Exception::TypeError(String::New("Unknown QuirksMode type")));
+	return Undefined();
     }
 
     return String::NewSymbol(mode_name);
@@ -104,9 +106,12 @@ get_attribute_namespace(GumboAttributeNamespaceEnum attr_namespace) {
 	namespace_name = "xmlns";
 	break;
     case GUMBO_ATTR_NAMESPACE_NONE:
-	// fall-through...
-    default:
 	return Null();
+	break;
+    default:
+	ThrowException(
+            Exception::TypeError(String::New("Unknown attribute namespace")));
+	return Undefined();
 	break;
     }
 
@@ -154,7 +159,7 @@ Local<Object> get_attributes(GumboVector* element_attrs) {
 }
 
 
-Local<String> get_tag_namespace(GumboNamespaceEnum tag_namespace) {
+Handle<Value> get_tag_namespace(GumboNamespaceEnum tag_namespace) {
     const char* namespace_name;
 
     switch (tag_namespace) {
@@ -168,8 +173,9 @@ Local<String> get_tag_namespace(GumboNamespaceEnum tag_namespace) {
 	namespace_name = "MATHML";
 	break;
     default:
-	// TODO: raise?
-	namespace_name = "unknown";
+	ThrowException(
+            Exception::TypeError(String::New("Unknown tag namespace")));
+	return Undefined();
     }
 
     return String::NewSymbol(namespace_name);
@@ -220,7 +226,7 @@ Local<Object> consume_text(GumboText* text) {
 }
 
 
-Local<String> get_parse_flags(GumboParseFlags flags) {
+Handle<Value> get_parse_flags(GumboParseFlags flags) {
     const char* flag_name;
 
     switch(flags) {
@@ -258,14 +264,15 @@ Local<String> get_parse_flags(GumboParseFlags flags) {
 	flag_name = "fosterParented";
 	break;
     default:
-	flag_name = "unknown";
+	ThrowException(Exception::TypeError(String::New("Unknown parse flag")));
+	return Undefined();
     }
 
     return String::NewSymbol(flag_name);
 }
 
 
-Local<String> get_node_type(GumboNodeType node_type) {
+Handle<Value> get_node_type(GumboNodeType node_type) {
     const char* type_name;
 
     switch (node_type) {
@@ -288,15 +295,15 @@ Local<String> get_node_type(GumboNodeType node_type) {
 	type_name = "whitespace";
 	break;
     default:
-	type_name = "unknown";
-	break;
+	ThrowException(Exception::TypeError(String::New("Unknown node type")));
+	return Undefined();
     }
 
     return String::NewSymbol(type_name);
 }
 
 
-Local<Object> create_parse_tree(GumboNode* node, Handle<Value> parent) {
+Handle<Value> create_parse_tree(GumboNode* node, Handle<Value> parent) {
     Local<Object> parsed;
 
     switch (node->type) {
@@ -314,6 +321,10 @@ Local<Object> create_parse_tree(GumboNode* node, Handle<Value> parent) {
     case GUMBO_NODE_DOCUMENT:
 	parsed = consume_document(&node->v.document);
 	break;
+
+    default:
+	ThrowException(Exception::TypeError(String::New("Unknown node type")));
+	return Undefined();
     }
 
     parsed->Set(String::NewSymbol("type"), get_node_type(node->type));
@@ -353,7 +364,7 @@ Handle<Value> Method(const Arguments& args) {
 			      c_str,
 			      args[0]->ToString()->Utf8Length());
 
-    Local<Object> tree = create_parse_tree(output->document, Null());
+    Handle<Value> tree = create_parse_tree(output->document, Null());
 
     gumbo_destroy_output(&kGumboDefaultOptions, output);
 
