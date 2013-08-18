@@ -3,32 +3,60 @@ gumbo-node
 
 Node bindings for Google's gumbo html parser
 
+
 Goals
 -----
 
-- provide a high-quality HTML5 parse tree of html source
-- annotate this tree with source location information for later processing
+- provide a direct port of the Gumbo API for Node
 
 
 API
 ---
 
 Node
-- nodeType: integer
-- nodeName: string
-- position: Object
-  - line: line number (1-indexed)
-  - column: column number (1-indexed)
-  - offset: byte offset (0-indexed)
+- type: Number
+- parent: Node
+- indexWithinParent: Number
+- parseFlags: String
+
+Document:
+- children: Array of Nodes
+- hasDoctype: Boolean
+- name: String
+- publicIdentifier: String
+- systemIdentifier: String
+- docTypeQuirksMode: String
 
 Element:
-- tagName: gumbo normalized tag name
+- children: Array of Nodes
+- tag: gumbo normalized tag name
+- tagNamespace: String
 - originalTag: tag from source
-- children: array of Nodes
-- attributes: hash of attr names/values
+- originalEndTag: String
+- attributes: hash of Attributes
+- startPos: Position
+- endPos: Position
+
+Attribute:
+- attrNamespace: String
+- name: String
+- originalName: String
+- value: String
+- originalValue: String
+- nameStart: Position
+- nameEnd: Position
+- valueStart: Position
+- valueEnd: Position
+
+Position:
+- line: line number (1-indexed)
+- column: column number (1-indexed)
+- offset: byte offset (0-indexed)
 
 Text/Comment/CDATA:
-- text
+- text: String
+- originalText: String
+- starPos: Position
 
 
 Thanks
