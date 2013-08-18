@@ -72,7 +72,8 @@ Local<Object> consume_element(GumboElement* element) {
 
 Local<Object> consume_text(GumboText* text) {
     Local<Object> text_node = Object::New();
-    text_node->Set(String::NewSymbol("nodeName"), String::NewSymbol("#text"));
+    text_node->Set(String::NewSymbol("nodeName"),
+		   String::NewSymbol("#text"));
     text_node->Set(String::NewSymbol("text"),
 		   String::New(text->text));
     text_node->Set(String::NewSymbol("nodeType"), Number::New(3));
@@ -84,7 +85,8 @@ Local<Object> consume_text(GumboText* text) {
 
 Local<Object> consume_comment(GumboText* text) {
     Local<Object> comment_node = Object::New();
-    comment_node->Set(String::NewSymbol("nodeName"), String::NewSymbol("#comment"));
+    comment_node->Set(String::NewSymbol("nodeName"),
+		      String::NewSymbol("#comment"));
     comment_node->Set(String::NewSymbol("text"),
 		      String::New(text->text));
     comment_node->Set(String::NewSymbol("nodeType"), Number::New(8));
@@ -96,7 +98,8 @@ Local<Object> consume_comment(GumboText* text) {
 
 Local<Object> consume_cdata(GumboText* text) {
     Local<Object> cdata_node = Object::New();
-    cdata_node->Set(String::NewSymbol("nodeName"), String::NewSymbol("#comment"));
+    cdata_node->Set(String::NewSymbol("nodeName"),
+		    String::NewSymbol("#comment"));
     cdata_node->Set(String::NewSymbol("text"),
 		    String::New(text->text));
     cdata_node->Set(String::NewSymbol("nodeType"), Number::New(4));
@@ -136,21 +139,24 @@ Handle<Value> Method(const Arguments& args) {
     HandleScope scope;
 
     if (args.Length() != 1) {
-	ThrowException(Exception::TypeError(String::New("Please give Gumbo an HTML string")));
+	ThrowException(Exception::TypeError
+		       (String::New("Please give Gumbo a single HTML string")));
 	return scope.Close(Undefined());
     }
 
     if (!args[0]->IsString()) {
-	ThrowException(Exception::TypeError(String::New("Gumbo works on an HTML string")));
+	ThrowException(Exception::TypeError
+		       (String::New("Gumbo works on an HTML string")));
 	return scope.Close(Undefined());
     }
 
     String::Utf8Value str(args[0]->ToString());
     char* c_str = *str;
 
-    GumboOutput* output = gumbo_parse_with_options(&kGumboDefaultOptions,
-						   c_str,
-						   args[0]->ToString()->Utf8Length());
+    GumboOutput* output = gumbo_parse_with_options(
+			      &kGumboDefaultOptions,
+			      c_str,
+			      args[0]->ToString()->Utf8Length());
 
     Local<Object> tree = create_parse_tree(output->root);
 
