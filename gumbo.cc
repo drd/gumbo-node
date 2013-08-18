@@ -86,13 +86,65 @@ Local<Object> consume_document(GumboDocument* document) {
 }
 
 
+Handle<Value>
+get_attribute_namespace(GumboAttributeNamespaceEnum attr_namespace) {
+    const char* namespace_name;
+
+    switch (attr_namespace) {
+    case GUMBO_ATTR_NAMESPACE_XLINK:
+	namespace_name = "xlink";
+	break;
+    case GUMBO_ATTR_NAMESPACE_XML:
+	namespace_name = "xml";
+	break;
+    case GUMBO_ATTR_NAMESPACE_XMLNS:
+	namespace_name = "xmlns";
+	break;
+    case GUMBO_ATTR_NAMESPACE_NONE:
+	// fall-through...
+    default:
+	return Null();
+	break;
+    }
+
+    return String::NewSymbol(namespace_name);
+}
+
+
+Local<Object> get_attribute(GumboAttribute* attr) {
+    Local<Object> attribute = Object::New();
+
+    attribute->Set(String::NewSymbol("namespace"),
+		   get_attribute_namespace(attr->attr_namespace));
+
+    attribute->Set(String::NewSymbol("name"),
+		   String::New(attr->name));
+    attribute->Set(String::NewSymbol("originalName"),
+		   String::New(attr->original_name.data,
+			       attr->original_name.length));
+
+    attribute->Set(String::NewSymbol("value"),
+		   String::New(attr->value));
+    attribute->Set(String::NewSymbol("originalValue"),
+		   String::New(attr->original_value.data,
+			       attr->original_value.length));
+
+    record_location(attribute, &attr->name_start, "nameStart");
+    record_location(attribute, &attr->name_end, "nameEnd");
+
+    record_location(attribute, &attr->value_start, "valueStart");
+    record_location(attribute, &attr->value_end, "valueEnd");
+
+    return attribute;
+}
+
 Local<Object> get_attributes(GumboVector* element_attrs) {
     Local<Object> attributes = Object::New();
 
     for (uint i=0; i < element_attrs->length; i++) {
 	GumboAttribute* element_attr = (GumboAttribute* )element_attrs->data[i];
 	attributes->Set(String::New(element_attr->name),
-			String::New(element_attr->value));
+			get_attribute(element_attr));
     }
 
     return attributes;

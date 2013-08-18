@@ -14,12 +14,13 @@ function testParse(err, text) {
     assert(!!document, "Returned a value");
 
     var tree = document.children[0];
+    // TODO: replace this with real tests :)
     assert(tree.tag == 'html', "Root node is <html>");
     assert(tree.children[0].tag == 'head');
     assert(tree.children[0].children[1].tag == 'title');
     assert(tree.children[2].tag == 'body');
     assert(tree.children[2].children[1].text == ' hark, a comment! ');
-    assert(tree.children[2].children[3].attributes['class'] == 'waffle');
+    assert(tree.children[2].children[3].attributes['class'].value == 'waffle');
 }
 
 
