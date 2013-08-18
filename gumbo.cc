@@ -258,6 +258,37 @@ Local<String> get_parse_flags(GumboParseFlags flags) {
 }
 
 
+Local<String> get_node_type(GumboNodeType node_type) {
+    const char* type_name;
+
+    switch (node_type) {
+    case GUMBO_NODE_DOCUMENT:
+	type_name = "document";
+	break;
+    case GUMBO_NODE_ELEMENT:
+	type_name = "element";
+	break;
+    case GUMBO_NODE_TEXT:
+	type_name = "text";
+	break;
+    case GUMBO_NODE_CDATA:
+	type_name = "cdata";
+	break;
+    case GUMBO_NODE_COMMENT:
+	type_name = "comment";
+	break;
+    case GUMBO_NODE_WHITESPACE:
+	type_name = "whitespace";
+	break;
+    default:
+	type_name = "unknown";
+	break;
+    }
+
+    return String::NewSymbol(type_name);
+}
+
+
 Local<Object> create_parse_tree(GumboNode* node, Handle<Value> parent) {
     Local<Object> parsed;
 
@@ -276,6 +307,7 @@ Local<Object> create_parse_tree(GumboNode* node, Handle<Value> parent) {
 	break;
     }
 
+    parsed->Set(String::NewSymbol("type"), get_node_type(node->type));
     parsed->Set(String::NewSymbol("parent"), parent);
     parsed->Set(String::NewSymbol("indexWithinParent"),
 				  Number::New(node->index_within_parent));
