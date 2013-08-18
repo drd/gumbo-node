@@ -47,20 +47,23 @@ Local<Array> get_children(GumboVector* children, Handle<Value> parent) {
 
 
 Local<String> get_quirks_mode(GumboQuirksModeEnum mode) {
+    const char* mode_name;
     switch (mode) {
     case GUMBO_DOCTYPE_NO_QUIRKS:
-	return String::NewSymbol("noQuirks");
+	mode_name = "noQuirks";
 	break;
     case GUMBO_DOCTYPE_QUIRKS:
-	return String::NewSymbol("quirks");
+	mode_name = "quirks";
 	break;
     case GUMBO_DOCTYPE_LIMITED_QUIRKS:
-	return String::NewSymbol("limitedQuirks");
+	mode_name = "limitedQuirks";
 	break;
     default:
 	// TODO: raise exception?
-	return String::NewSymbol("unknown");
+	mode_name = "unknown";
     }
+
+    return String::NewSymbol(mode_name);
 }
 
 
@@ -152,20 +155,24 @@ Local<Object> get_attributes(GumboVector* element_attrs) {
 
 
 Local<String> get_tag_namespace(GumboNamespaceEnum tag_namespace) {
+    const char* namespace_name;
+
     switch (tag_namespace) {
     case GUMBO_NAMESPACE_HTML:
-	return String::NewSymbol("HTML");
+	namespace_name = "HTML";
 	break;
     case GUMBO_NAMESPACE_SVG:
-	return String::NewSymbol("SVG");
+	namespace_name = "SVG";
 	break;
     case GUMBO_NAMESPACE_MATHML:
-	return String::NewSymbol("MATHML");
+	namespace_name = "MATHML";
 	break;
     default:
 	// TODO: raise?
-	return String::NewSymbol("unknown");
+	namespace_name = "unknown";
     }
+
+    return String::NewSymbol(namespace_name);
 }
 
 
@@ -296,21 +303,26 @@ Local<Object> create_parse_tree(GumboNode* node, Handle<Value> parent) {
     case GUMBO_NODE_ELEMENT:
 	parsed = consume_element(&node->v.element, parent);
 	break;
+
     case GUMBO_NODE_WHITESPACE:
     case GUMBO_NODE_TEXT:
     case GUMBO_NODE_CDATA:
     case GUMBO_NODE_COMMENT:
 	parsed = consume_text(&node->v.text);
 	break;
+
     case GUMBO_NODE_DOCUMENT:
 	parsed = consume_document(&node->v.document);
 	break;
     }
 
     parsed->Set(String::NewSymbol("type"), get_node_type(node->type));
+
     parsed->Set(String::NewSymbol("parent"), parent);
+
     parsed->Set(String::NewSymbol("indexWithinParent"),
-				  Number::New(node->index_within_parent));
+		Number::New(node->index_within_parent));
+
     parsed->Set(String::NewSymbol("parseFlags"),
 		get_parse_flags(node->parse_flags));
 
