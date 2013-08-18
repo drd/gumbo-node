@@ -10,14 +10,15 @@ function testParse(err, text) {
 
     console.log("Running tests");
 
-    var tree = gumbo.parse(text);
-    assert(!!tree, "Returned a value");
+    var document = gumbo.parse(text);
+    assert(!!document, "Returned a value");
 
-    assert(tree.tagName == 'html', "Root node is <html>");
-    assert(tree.children[0].tagName == 'head');
-    assert(tree.children[0].children[1].tagName == 'title');
-    assert(tree.children[2].tagName == 'body');
-    assert(tree.children[2].children[1].nodeName == '#comment');
+    var tree = document.children[0];
+    assert(tree.tag == 'html', "Root node is <html>");
+    assert(tree.children[0].tag == 'head');
+    assert(tree.children[0].children[1].tag == 'title');
+    assert(tree.children[2].tag == 'body');
+    assert(tree.children[2].children[1].text == ' hark, a comment! ');
     assert(tree.children[2].children[3].attributes['class'] == 'waffle');
 }
 

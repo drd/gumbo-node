@@ -14,14 +14,14 @@
 using namespace v8;
 
 
-Local<Object> create_parse_tree(GumboNode* root);
-Local<Object> consume_element(GumboElement* element);
+Local<Object> create_parse_tree(GumboNode* root, Handle<Value> parent);
+Local<Array> get_children(GumboVector* children);
+Local<Object> consume_document(GumboDocument* document);
+Local<Object> consume_element(GumboElement* element, Handle<Value> parent);
 Local<Object> consume_text(GumboText* text);
-Local<Object> consume_comment(GumboText* text);
-Local<Object> consume_cdata(GumboText* text);
 
 
-void record_location(Local<Object> node, GumboSourcePosition* pos) {
+void record_location(Local<Object> node, GumboSourcePosition* pos, const char* name) {
     Local<Object> position = Object::New();
     position->Set(String::NewSymbol("line"),
 		  Number::New(pos->line));
@@ -29,107 +29,206 @@ void record_location(Local<Object> node, GumboSourcePosition* pos) {
 		  Number::New(pos->column));
     position->Set(String::NewSymbol("offset"),
 		  Number::New(pos->offset));
-    node->Set(String::NewSymbol("position"), position);
+    node->Set(String::NewSymbol(name), position);
 }
 
 
-Local<Object> consume_element(GumboElement* element) {
-    Local<Object> element_node = Object::New();
-    element_node->Set(String::NewSymbol("tagName"),
-		      String::New(gumbo_normalized_tagname(element->tag)));
+Local<Array> get_children(GumboVector* children, Handle<Value> parent) {
+    Local<Array> node_children = Array::New();
 
-    // TODO: omit brackets and attr list
-    element_node->Set(String::NewSymbol("originalTag"),
-		      String::New(element->original_tag.data,
-				  element->original_tag.length));
-    element_node->Set(String::NewSymbol("nodeType"), Number::New(1));
+    for (uint i=0; i < children->length; i++) {
+	GumboNode* node_child = (GumboNode* )children->data[i];
+	Local<Object> child = create_parse_tree(node_child, parent);
+	node_children->Set(Number::New(i), child);
+    }
 
+    return node_children;
+}
+
+
+Local<String> get_quirks_mode(GumboQuirksModeEnum mode) {
+    switch (mode) {
+    case GUMBO_DOCTYPE_NO_QUIRKS:
+	return String::NewSymbol("noQuirks");
+	break;
+    case GUMBO_DOCTYPE_QUIRKS:
+	return String::NewSymbol("quirks");
+	break;
+    case GUMBO_DOCTYPE_LIMITED_QUIRKS:
+	return String::NewSymbol("limitedQuirks");
+	break;
+    default:
+	// TODO: raise exception?
+	return String::NewSymbol("unknown");
+    }
+}
+
+
+Local<Object> consume_document(GumboDocument* document) {
+    Local<Object> document_node = Object::New();
+    document_node->Set(String::NewSymbol("hasDoctype"),
+		       Boolean::New(document->has_doctype));
+
+    document_node->Set(String::NewSymbol("name"),
+		       String::New(document->name));
+    document_node->Set(String::NewSymbol("publicIdentifier"),
+		       String::New(document->public_identifier));
+    document_node->Set(String::NewSymbol("children"),
+		       String::New(document->system_identifier));
+
+    document_node->Set(String::NewSymbol("docTypeQuirksMode"),
+		       get_quirks_mode(document->doc_type_quirks_mode));
+
+    document_node->Set(String::NewSymbol("children"),
+		       get_children(&document->children, document_node));
+
+    return document_node;
+}
+
+
+Local<Object> get_attributes(GumboVector* element_attrs) {
     Local<Object> attributes = Object::New();
-    element_node->Set(String::NewSymbol("attributes"), attributes);
 
-    GumboVector* element_attrs = &element->attributes;
     for (uint i=0; i < element_attrs->length; i++) {
 	GumboAttribute* element_attr = (GumboAttribute* )element_attrs->data[i];
 	attributes->Set(String::New(element_attr->name),
 			String::New(element_attr->value));
     }
 
-    Local<Array> children = Array::New();
-    element_node->Set(String::NewSymbol("children"),
-	      children);
+    return attributes;
+}
 
-    GumboVector* element_children = &element->children;
-    for (uint i=0; i < element->children.length; i++) {
-	GumboNode* element_child = (GumboNode* )element_children->data[i];
-	Local<Object> child = create_parse_tree(element_child);
-	children->Set(Number::New(i), child);
+
+Local<String> get_tag_namespace(GumboNamespaceEnum tag_namespace) {
+    switch (tag_namespace) {
+    case GUMBO_NAMESPACE_HTML:
+	return String::NewSymbol("HTML");
+	break;
+    case GUMBO_NAMESPACE_SVG:
+	return String::NewSymbol("SVG");
+	break;
+    case GUMBO_NAMESPACE_MATHML:
+	return String::NewSymbol("MATHML");
+	break;
+    default:
+	// TODO: raise?
+	return String::NewSymbol("unknown");
     }
+}
 
-    record_location(element_node, &element->start_pos);
+
+Local<Object> consume_element(GumboElement* element, Handle<Value> parent) {
+    Local<Object> element_node = Object::New();
+    element_node->Set(String::NewSymbol("tag"),
+		      String::New(gumbo_normalized_tagname(element->tag)));
+
+    element_node->Set(String::NewSymbol("tagNamespace"),
+		      get_tag_namespace(element->tag_namespace));
+
+    // TODO: omit brackets and attr list
+    element_node->Set(String::NewSymbol("originalTag"),
+		      String::New(element->original_tag.data,
+				  element->original_tag.length));
+
+    element_node->Set(String::NewSymbol("originalEndTag"),
+		      String::New(element->original_end_tag.data,
+				  element->original_end_tag.length));
+
+    Local<Object> attributes = Object::New();
+    element_node->Set(String::NewSymbol("attributes"),
+		      get_attributes(&element->attributes));
+
+
+    element_node->Set(String::NewSymbol("children"),
+		      get_children(&element->children, element_node));
+
+    record_location(element_node, &element->start_pos, "startPos");
+    record_location(element_node, &element->end_pos, "endPos");
     return element_node;
 }
 
 
 Local<Object> consume_text(GumboText* text) {
     Local<Object> text_node = Object::New();
-    text_node->Set(String::NewSymbol("nodeName"),
-		   String::NewSymbol("#text"));
     text_node->Set(String::NewSymbol("text"),
 		   String::New(text->text));
-    text_node->Set(String::NewSymbol("nodeType"), Number::New(3));
+    text_node->Set(String::NewSymbol("originalText"),
+		   String::New(text->original_text.data,
+			       text->original_text.length));
 
-    record_location(text_node, &text->start_pos);
+    record_location(text_node, &text->start_pos, "startPos");
     return text_node;
 }
 
 
-Local<Object> consume_comment(GumboText* text) {
-    Local<Object> comment_node = Object::New();
-    comment_node->Set(String::NewSymbol("nodeName"),
-		      String::NewSymbol("#comment"));
-    comment_node->Set(String::NewSymbol("text"),
-		      String::New(text->text));
-    comment_node->Set(String::NewSymbol("nodeType"), Number::New(8));
+Local<String> get_parse_flags(GumboParseFlags flags) {
+    const char* flag_name;
 
-    record_location(comment_node, &text->start_pos);
-    return comment_node;
+    switch(flags) {
+    case GUMBO_INSERTION_NORMAL:
+	flag_name = "normal";
+	break;
+    case GUMBO_INSERTION_BY_PARSER:
+	flag_name = "byParser";
+	break;
+    case GUMBO_INSERTION_IMPLICIT_END_TAG:
+	flag_name = "implicitEndTag";
+	break;
+    case GUMBO_INSERTION_IMPLIED:
+	flag_name = "implied";
+	break;
+    case GUMBO_INSERTION_CONVERTED_FROM_END_TAG:
+	flag_name = "convertedFromEndTag";
+	break;
+    case GUMBO_INSERTION_FROM_ISINDEX:
+	flag_name = "fromIsindex";
+	break;
+    case GUMBO_INSERTION_FROM_IMAGE:
+	flag_name = "fromImage";
+	break;
+    case GUMBO_INSERTION_RECONSTRUCTED_FORMATTING_ELEMENT:
+	flag_name = "reconstructedFormattingElement";
+	break;
+    case GUMBO_INSERTION_ADOPTION_AGENCY_CLONED:
+	flag_name = "adoptionAgencyCloned";
+	break;
+    case GUMBO_INSERTION_ADOPTION_AGENCY_MOVED:
+	flag_name = "adoptionAgencyMoved";
+	break;
+    case GUMBO_INSERTION_FOSTER_PARENTED:
+	flag_name = "fosterParented";
+	break;
+    default:
+	flag_name = "unknown";
+    }
+
+    return String::NewSymbol(flag_name);
 }
 
 
-Local<Object> consume_cdata(GumboText* text) {
-    Local<Object> cdata_node = Object::New();
-    cdata_node->Set(String::NewSymbol("nodeName"),
-		    String::NewSymbol("#comment"));
-    cdata_node->Set(String::NewSymbol("text"),
-		    String::New(text->text));
-    cdata_node->Set(String::NewSymbol("nodeType"), Number::New(4));
-
-    record_location(cdata_node, &text->start_pos);
-    return cdata_node;
-}
-
-
-Local<Object> create_parse_tree(GumboNode* node) {
+Local<Object> create_parse_tree(GumboNode* node, Handle<Value> parent) {
     Local<Object> parsed;
 
     switch (node->type) {
     case GUMBO_NODE_ELEMENT:
-	parsed = consume_element(&node->v.element);
+	parsed = consume_element(&node->v.element, parent);
 	break;
     case GUMBO_NODE_WHITESPACE:
     case GUMBO_NODE_TEXT:
+    case GUMBO_NODE_CDATA:
+    case GUMBO_NODE_COMMENT:
 	parsed = consume_text(&node->v.text);
 	break;
-    case GUMBO_NODE_CDATA:
-	parsed = consume_cdata(&node->v.text);
-	break;
-    case GUMBO_NODE_COMMENT:
-	parsed = consume_comment(&node->v.text);
-	break;
     case GUMBO_NODE_DOCUMENT:
-	// should never happen
+	parsed = consume_document(&node->v.document);
 	break;
     }
+
+    parsed->Set(String::NewSymbol("parent"), parent);
+    parsed->Set(String::NewSymbol("indexWithinParent"),
+				  Number::New(node->index_within_parent));
+    parsed->Set(String::NewSymbol("parseFlags"),
+		get_parse_flags(node->parse_flags));
 
     return parsed;
 }
@@ -158,7 +257,7 @@ Handle<Value> Method(const Arguments& args) {
 			      c_str,
 			      args[0]->ToString()->Utf8Length());
 
-    Local<Object> tree = create_parse_tree(output->root);
+    Local<Object> tree = create_parse_tree(output->document, Null());
 
     gumbo_destroy_output(&kGumboDefaultOptions, output);
 
