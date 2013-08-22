@@ -228,47 +228,56 @@ Local<Object> consume_text(GumboText* text) {
 
 Handle<Value> get_parse_flags(GumboParseFlags flags) {
     const char* flag_name;
+    Local<Array> parse_flags = Array::New();
+    int index = 0;
 
-    switch(flags) {
-    case GUMBO_INSERTION_NORMAL:
-	flag_name = "normal";
-	break;
-    case GUMBO_INSERTION_BY_PARSER:
-	flag_name = "byParser";
-	break;
-    case GUMBO_INSERTION_IMPLICIT_END_TAG:
-	flag_name = "implicitEndTag";
-	break;
-    case GUMBO_INSERTION_IMPLIED:
-	flag_name = "implied";
-	break;
-    case GUMBO_INSERTION_CONVERTED_FROM_END_TAG:
-	flag_name = "convertedFromEndTag";
-	break;
-    case GUMBO_INSERTION_FROM_ISINDEX:
-	flag_name = "fromIsindex";
-	break;
-    case GUMBO_INSERTION_FROM_IMAGE:
-	flag_name = "fromImage";
-	break;
-    case GUMBO_INSERTION_RECONSTRUCTED_FORMATTING_ELEMENT:
-	flag_name = "reconstructedFormattingElement";
-	break;
-    case GUMBO_INSERTION_ADOPTION_AGENCY_CLONED:
-	flag_name = "adoptionAgencyCloned";
-	break;
-    case GUMBO_INSERTION_ADOPTION_AGENCY_MOVED:
-	flag_name = "adoptionAgencyMoved";
-	break;
-    case GUMBO_INSERTION_FOSTER_PARENTED:
-	flag_name = "fosterParented";
-	break;
-    default:
-	ThrowException(Exception::TypeError(String::New("Unknown parse flag")));
-	return Undefined();
+    // ATTN: this is the only equality check
+    if (flags == GUMBO_INSERTION_NORMAL) {
+	parse_flags->Set(Integer::New(index++),
+			 String::New("normal"));
+    }
+    if (flags & GUMBO_INSERTION_BY_PARSER) {
+	parse_flags->Set(Integer::New(index++),
+			 String::New("byParser"));
+    }
+    if (flags & GUMBO_INSERTION_IMPLICIT_END_TAG) {
+	parse_flags->Set(Integer::New(index++),
+			 String::New("implicitEndTag"));
+    }
+    if (flags & GUMBO_INSERTION_IMPLIED) {
+	parse_flags->Set(Integer::New(index++),
+			 String::New("implied"));
+    }
+    if (flags & GUMBO_INSERTION_CONVERTED_FROM_END_TAG) {
+	parse_flags->Set(Integer::New(index++),
+			 String::New("convertedFromEndTag"));
+    }
+    if (flags & GUMBO_INSERTION_FROM_ISINDEX) {
+	parse_flags->Set(Integer::New(index++),
+			 String::New("fromIsindex"));
+    }
+    if (flags & GUMBO_INSERTION_FROM_IMAGE) {
+	parse_flags->Set(Integer::New(index++),
+			 String::New("fromImage"));
+    }
+    if (flags & GUMBO_INSERTION_RECONSTRUCTED_FORMATTING_ELEMENT) {
+	parse_flags->Set(Integer::New(index++),
+			 String::New("reconstructedFormattingElement"));
+    }
+    if (flags & GUMBO_INSERTION_ADOPTION_AGENCY_CLONED) {
+	parse_flags->Set(Integer::New(index++),
+			 String::New("adoptionAgencyCloned"));
+    }
+    if (flags & GUMBO_INSERTION_ADOPTION_AGENCY_MOVED) {
+	parse_flags->Set(Integer::New(index++),
+			 String::New("adoptionAgencyMoved"));
+    }
+    if (flags & GUMBO_INSERTION_FOSTER_PARENTED) {
+	parse_flags->Set(Integer::New(index++),
+			 String::New("fosterParented"));
     }
 
-    return String::NewSymbol(flag_name);
+    return parse_flags;
 }
 
 
